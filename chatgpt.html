@@ -1,16 +1,21 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Model Roket Boyut Hesaplayıcı</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Model Rocket Size Calculator</title>
 <style>
-:root{--bg:#0b1220;--panel:#121d30;--line:#2b3a53;--text:#e8eef8;--muted:#9fb0c8;--accent:#70d6b3;--input:#0b1527}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#0b1220,#14243a);color:var(--text);font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif}
+:root{--bg:#0b1220;--panel:#121d30;--line:#2b3a53;--text:#e8eef8;--muted:#9fb0c8;--accent:#70d6b3;--input:#0b1527;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:#0b1220 linear-gradient(145deg,#0b1220,#14243a);color:var(--text);font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif;min-height:100vh}
 main{max-width:1080px;margin:auto;padding:28px 18px 60px}h1{font-size:clamp(26px,4vw,38px);margin:0 0 8px}h2{font-size:19px;margin:0 0 14px}.intro{color:var(--muted);max-width:760px;margin-bottom:24px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.lang{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.lang button{border-radius:0;background:#243750;color:var(--text);padding:8px 14px;font-weight:600}
+.lang button.on{background:var(--accent);color:#092016}
 .layout{display:grid;grid-template-columns:minmax(260px,350px) 1fr;gap:18px}.panel{background:rgba(18,29,48,.94);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 12px 30px #0002}
 label{display:block;color:var(--muted);font-size:13px;margin:12px 0 5px}input,select{width:100%;background:var(--input);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:11px;font:inherit}input:focus,select:focus{outline:2px solid #70d6b366;border-color:var(--accent)}
-.small{font-size:12px;color:var(--muted)}.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:#0c1728;border:1px solid var(--line);padding:13px;border-radius:11px;min-width:0}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:20px;margin-top:4px;overflow-wrap:anywhere}.metric em{font-size:12px;color:var(--accent);font-style:normal}
+.small{font-size:12px;color:var(--muted)}.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:#0c1728;border:1px solid var(--line);padding:13px;border-radius:11px;min-width:0}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:20px;margin-top:4px;overflow-wrap:anywhere}
 table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}td,th{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}
 .note{margin-top:18px;padding:13px 15px;border-left:3px solid var(--accent);background:#0b1828;border-radius:8px;color:#c6d4e8;font-size:13px}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:9px;background:var(--accent);color:#092016;font-weight:700;padding:10px 14px;cursor:pointer}button.secondary{background:#243750;color:var(--text)}
@@ -18,51 +23,91 @@ svg{width:100%;height:auto;display:block;background:#0b1728;border:1px solid var
 footer{color:var(--muted);font-size:12px;margin-top:20px}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.results{grid-template-columns:1fr 1fr}}
 @media(max-width:420px){.results{grid-template-columns:1fr}}
+@media print{.lang{display:none}}
 </style>
 </head>
 <body>
 <main>
-<h1>Model Roket Boyut Hesaplayıcı</h1>
-<p class="intro">Gövde çapını ve tasarım oranlarını gir; temel dış ölçüler otomatik hesaplansın. Bu araç ön taslak içindir, uçuşa hazır tasarım veya stabilite onayı değildir.</p>
+<div class="top">
+<h1 data-i18n="h1">Model Rocket Size Calculator</h1>
+<div class="lang" role="group" aria-label="Language / Dil"><button id="lang-en" type="button">English</button><button id="lang-tr" type="button">Türkçe</button></div>
+</div>
+<p class="intro" data-i18n="intro"></p>
 <div class="layout">
 <section class="panel">
-<h2>Girdiler</h2>
-<label for="diam">Gövde dış çapı D (mm)</label><input id="diam" type="number" min="10" max="300" step="1" value="50">
-<label for="bodyRatio">Gövde uzunluğu (D katsayısı)</label><input id="bodyRatio" type="number" min="4" max="20" step=".1" value="10">
-<label for="noseRatio">Burun uzunluğu (D katsayısı)</label><input id="noseRatio" type="number" min="1" max="5" step=".1" value="3">
-<label for="rootRatio">Fin kök kord (D katsayısı)</label><input id="rootRatio" type="number" min=".5" max="4" step=".05" value="2">
-<label for="spanRatio">Fin açıklığı (D katsayısı)</label><input id="spanRatio" type="number" min=".3" max="2.5" step=".05" value="1">
-<label for="tipRatio">Fin uç/kök kord oranı</label><input id="tipRatio" type="number" min="0" max="1" step=".05" value=".5">
-<label for="sweepRatio">Ön kenar geriye süpürme (D katsayısı)</label><input id="sweepRatio" type="number" min="0" max="2" step=".05" value=".5">
-<label for="finCount">Fin sayısı</label><select id="finCount"><option value="3" selected>3 fin (120°)</option><option value="4">4 fin (90°)</option></select>
-<label for="unit">Gösterim</label><select id="unit"><option value="mm" selected>Milimetre</option><option value="cm">Santimetre</option><option value="in">İnç</option></select>
-<div class="actions"><button id="reset">Varsayılana dön</button><button class="secondary" id="print">Yazdır / PDF</button></div>
+<h2 data-i18n="h_inputs"></h2>
+<label for="diam" data-i18n="l_diam"></label><input id="diam" type="number" min="10" max="300" step="1" value="50">
+<label for="bodyRatio" data-i18n="l_body"></label><input id="bodyRatio" type="number" min="4" max="20" step=".1" value="10">
+<label for="noseRatio" data-i18n="l_nose"></label><input id="noseRatio" type="number" min="1" max="5" step=".1" value="3">
+<label for="rootRatio" data-i18n="l_root"></label><input id="rootRatio" type="number" min=".5" max="4" step=".05" value="2">
+<label for="spanRatio" data-i18n="l_span"></label><input id="spanRatio" type="number" min=".3" max="2.5" step=".05" value="1">
+<label for="tipRatio" data-i18n="l_tip"></label><input id="tipRatio" type="number" min="0" max="1" step=".05" value=".5">
+<label for="sweepRatio" data-i18n="l_sweep"></label><input id="sweepRatio" type="number" min="0" max="2" step=".05" value=".5">
+<label for="finCount" data-i18n="l_fins"></label><select id="finCount"><option value="3" selected data-i18n="o3"></option><option value="4" data-i18n="o4"></option></select>
+<label for="unit" data-i18n="l_unit"></label><select id="unit"><option value="mm" selected data-i18n="u_mm"></option><option value="cm" data-i18n="u_cm"></option><option value="in" data-i18n="u_in"></option></select>
+<div class="actions"><button id="reset" data-i18n="reset"></button><button class="secondary" id="print" data-i18n="print"></button></div>
 </section>
 <section class="panel">
-<h2>Hesaplanan ölçüler</h2>
+<h2 data-i18n="h_results"></h2>
 <div class="results" id="results" aria-live="polite"></div>
-<table><thead><tr><th>Parça / parametre</th><th>Sonuç</th></tr></thead><tbody id="rows"></tbody></table>
-<div class="note"><b>Önemli:</b> Buradaki oranlar yalnızca başlangıç geometrisi örnekleridir. CG, CP ve statik marj otomatik olarak doğrulanmaz; gerçek kütle dağılımı ve aerodinamik analiz gerekir. Uçuş öncesi OpenRocket gibi bir simülatörde kontrol et ve yerel model roket güvenlik kurallarına uy.</div>
-<h2 style="margin-top:20px">Şematik yan görünüş</h2>
-<svg id="drawing" viewBox="0 0 760 250" role="img" aria-label="Roketin ölçülere göre ölçekli olmayan şematik yan görünüş"></svg>
+<table><thead><tr><th data-i18n="th_part"></th><th data-i18n="th_result"></th></tr></thead><tbody id="rows"></tbody></table>
+<div class="note" data-i18n="note"></div>
+<h2 style="margin-top:20px" data-i18n="h_drawing"></h2>
+<svg id="drawing" viewBox="0 0 760 250" role="img"></svg>
 </section>
 </div>
-<footer>Not: Toplam roket uzunluğu burada burun uzunluğu + gövde uzunluğu olarak gösterilir. Fin ölçüleri, gövde dış yüzeyinden fin ucuna olan açıklık olarak tanımlanır.</footer>
+<footer data-i18n="footer"></footer>
 </main>
 <script>
+const I18N={
+en:{title:'Model Rocket Size Calculator',h1:'Model Rocket Size Calculator',
+intro:'Enter the body diameter and design ratios; the basic outer dimensions are calculated automatically. This tool is for rough drafts only, not a flight-ready design or stability approval.',
+h_inputs:'Inputs',l_diam:'Body outer diameter D (mm)',l_body:'Body length (multiple of D)',l_nose:'Nose length (multiple of D)',l_root:'Fin root chord (multiple of D)',l_span:'Fin span (multiple of D)',l_tip:'Fin tip/root chord ratio',l_sweep:'Leading-edge sweep (multiple of D)',l_fins:'Number of fins',o3:'3 fins (120°)',o4:'4 fins (90°)',l_unit:'Display unit',u_mm:'Millimeters',u_cm:'Centimeters',u_in:'Inches',reset:'Reset to defaults',print:'Print / PDF',
+h_results:'Calculated dimensions',th_part:'Part / parameter',th_result:'Result',
+note:'<b>Important:</b> The ratios here are only starting-geometry examples. CG, CP and static margin are not verified automatically; real mass distribution and aerodynamic analysis are required. Check the design in a simulator such as OpenRocket before flight and follow your local model rocketry safety rules.',
+h_drawing:'Schematic side view',aria:'Schematic side view of the rocket, not to scale',
+footer:'Note: Total rocket length is shown here as nose length + body length. Fin dimensions are defined as the span from the body outer surface to the fin tip.',
+invalid:'Enter valid positive values.',
+m_total:'Total length',m_body:'Body length',m_nose:'Nose cone',m_span:'Fin outer span',m_root:'Fin root chord',m_tip:'Fin tip chord',
+r_D:'Body diameter D',r_bl:'Body length/diameter',r_nl:'Nose length/diameter',r_fins:'Fin count / angular spacing',r_span:'Fin span (body surface to tip)',r_root:'Fin root chord Cr',r_tip:'Fin tip chord Ct',r_taper:'Fin taper ratio Ct/Cr',r_sweep:'Fin leading-edge sweep',r_area:'Fin planform area (single fin)',r_outer:'Total diameter across fin tips',
+d_body:'Body',d_nose:'Nose',d_total:'Total length',d_note:'Schematic, limited scale'},
+tr:{title:'Model Roket Boyut Hesaplayıcı',h1:'Model Roket Boyut Hesaplayıcı',
+intro:'Gövde çapını ve tasarım oranlarını gir; temel dış ölçüler otomatik hesaplansın. Bu araç ön taslak içindir, uçuşa hazır tasarım veya stabilite onayı değildir.',
+h_inputs:'Girdiler',l_diam:'Gövde dış çapı D (mm)',l_body:'Gövde uzunluğu (D katsayısı)',l_nose:'Burun uzunluğu (D katsayısı)',l_root:'Fin kök kord (D katsayısı)',l_span:'Fin açıklığı (D katsayısı)',l_tip:'Fin uç/kök kord oranı',l_sweep:'Ön kenar geriye süpürme (D katsayısı)',l_fins:'Fin sayısı',o3:'3 fin (120°)',o4:'4 fin (90°)',l_unit:'Gösterim',u_mm:'Milimetre',u_cm:'Santimetre',u_in:'İnç',reset:'Varsayılana dön',print:'Yazdır / PDF',
+h_results:'Hesaplanan ölçüler',th_part:'Parça / parametre',th_result:'Sonuç',
+note:'<b>Önemli:</b> Buradaki oranlar yalnızca başlangıç geometrisi örnekleridir. CG, CP ve statik marj otomatik olarak doğrulanmaz; gerçek kütle dağılımı ve aerodinamik analiz gerekir. Uçuş öncesi OpenRocket gibi bir simülatörde kontrol et ve yerel model roket güvenlik kurallarına uy.',
+h_drawing:'Şematik yan görünüş',aria:'Roketin ölçülere göre ölçekli olmayan şematik yan görünüş',
+footer:'Not: Toplam roket uzunluğu burada burun uzunluğu + gövde uzunluğu olarak gösterilir. Fin ölçüleri, gövde dış yüzeyinden fin ucuna olan açıklık olarak tanımlanır.',
+invalid:'Geçerli pozitif değerler gir.',
+m_total:'Toplam uzunluk',m_body:'Gövde uzunluğu',m_nose:'Burun konisi',m_span:'Fin dış açıklığı',m_root:'Fin kök kord',m_tip:'Fin uç kord',
+r_D:'Gövde çapı D',r_bl:'Gövde uzunluk/çap',r_nl:'Burun uzunluk/çap',r_fins:'Fin sayısı / açısal aralık',r_span:'Fin span (gövde dışından uca)',r_root:'Fin kök kord Cr',r_tip:'Fin uç kord Ct',r_taper:'Fin taper oranı Ct/Cr',r_sweep:'Fin ön kenar süpürmesi',r_area:'Fin planform alanı (tek fin)',r_outer:'Fin ucuna kadar toplam dış çap',
+d_body:'Gövde',d_nose:'Burun',d_total:'Toplam uzunluk',d_note:'Şematik, ölçek sınırlı'}
+};
+let lang='en';
+try{const s=localStorage.getItem('rocketLang');if(s==='tr'||s==='en')lang=s}catch(e){}
+const t=k=>I18N[lang][k];
 const ids=['diam','bodyRatio','noseRatio','rootRatio','spanRatio','tipRatio','sweepRatio','finCount','unit'];
 const $=id=>document.getElementById(id);
-const fmt=n=>Number.isFinite(n)?n.toLocaleString('tr-TR',{maximumFractionDigits:2}):'—';
+const fmt=n=>Number.isFinite(n)?n.toLocaleString(lang==='tr'?'tr-TR':'en-US',{maximumFractionDigits:2}):'—';
 function convert(mm){const u=$('unit').value;return u==='cm'?mm/10:u==='in'?mm/25.4:mm}
 function unitLabel(){return $('unit').value}
 function show(mm){return fmt(convert(mm))+' '+unitLabel()}
+function applyLang(){
+ document.documentElement.lang=lang;document.title=t('title');
+ document.querySelectorAll('[data-i18n]').forEach(el=>{el.innerHTML=t(el.dataset.i18n)});
+ $('drawing').setAttribute('aria-label',t('aria'));
+ $('lang-en').classList.toggle('on',lang==='en');$('lang-tr').classList.toggle('on',lang==='tr');
+ $('lang-en').setAttribute('aria-pressed',lang==='en');$('lang-tr').setAttribute('aria-pressed',lang==='tr');
+ calculate();
+}
+function setLang(l){lang=l;try{localStorage.setItem('rocketLang',l)}catch(e){}applyLang()}
 function calculate(){
  let D=+$('diam').value, br=+$('bodyRatio').value,nr=+$('noseRatio').value,rr=+$('rootRatio').value,sr=+$('spanRatio').value,tr=+$('tipRatio').value,sw=+$('sweepRatio').value,N=+$('finCount').value;
- if(!(D>0&&br>0&&nr>0&&rr>0&&sr>0&&tr>=0&&tr<=1&&sw>=0)){ $('results').innerHTML='<p>Geçerli pozitif değerler gir.</p>';return; }
+ if(!(D>0&&br>0&&nr>0&&rr>0&&sr>0&&tr>=0&&tr<=1&&sw>=0)){ $('results').innerHTML='<p>'+t('invalid')+'</p>';return; }
  let body=D*br,nose=D*nr,root=D*rr,span=D*sr,tip=root*tr,sweep=D*sw,total=body+nose,area=(root+tip)*span/2,theta=360/N,finOuter=D/2+span;
- const metrics=[['Toplam uzunluk',show(total)],['Gövde uzunluğu',show(body)],['Burun konisi',show(nose)],['Fin dış açıklığı',show(span)],['Fin kök kord',show(root)],['Fin uç kord',show(tip)]];
+ const metrics=[[t('m_total'),show(total)],[t('m_body'),show(body)],[t('m_nose'),show(nose)],[t('m_span'),show(span)],[t('m_root'),show(root)],[t('m_tip'),show(tip)]];
  $('results').innerHTML=metrics.map(([a,b])=>`<div class="metric"><span>${a}</span><strong>${b}</strong></div>`).join('');
- const rows=[['Gövde çapı D',show(D)],['Gövde uzunluk/çap',fmt(br)+' D'],['Burun uzunluk/çap',fmt(nr)+' D'],['Fin sayısı / açısal aralık',N+' / '+fmt(theta)+'°'],['Fin span (gövde dışından uca)',show(span)],['Fin kök kord Cr',show(root)],['Fin uç kord Ct',show(tip)],['Fin taper oranı Ct/Cr',fmt(tr)],['Fin ön kenar süpürmesi',show(sweep)],['Fin planform alanı (tek fin)',fmt(convert(area*1))+' '+(unitLabel()==='mm'?'mm²':unitLabel()==='cm'?'cm²':'in²')],['Fin ucuna kadar toplam dış çap',show(2*finOuter)]];
+ const rows=[[t('r_D'),show(D)],[t('r_bl'),fmt(br)+' D'],[t('r_nl'),fmt(nr)+' D'],[t('r_fins'),N+' / '+fmt(theta)+'°'],[t('r_span'),show(span)],[t('r_root'),show(root)],[t('r_tip'),show(tip)],[t('r_taper'),fmt(tr)],[t('r_sweep'),show(sweep)],[t('r_area'),fmt(convert(area*1))+' '+(unitLabel()==='mm'?'mm²':unitLabel()==='cm'?'cm²':'in²')],[t('r_outer'),show(2*finOuter)]];
  $('rows').innerHTML=rows.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('');
  draw(D,body,nose,root,tip,span,sweep);
 }
@@ -74,14 +119,16 @@ function draw(D,body,nose,root,tip,span,sweep){
  <path d="M${x0} ${base} L${xN} ${base-h} L${xN} ${base+h} Z" fill="#70d6b3" opacity=".65" stroke="#70d6b3"/>
  <path d="M${xE-rootPx} ${base+h} L${xE-rootPx+swPx} ${base+h+finPx} L${xE-rootPx+swPx+tipPx} ${base+h+finPx} L${xE} ${base+h} Z" fill="#d8a85e" stroke="#f2d5a0" stroke-width="1.5"/>
  <path d="M${xE-rootPx} ${base-h} L${xE-rootPx+swPx} ${base-h-finPx} L${xE-rootPx+swPx+tipPx} ${base-h-finPx} L${xE} ${base-h} Z" fill="#d8a85e" opacity=".45" stroke="#f2d5a0" stroke-width="1.5"/>
- <line x1="${x0}" y1="205" x2="${xE}" y2="205" stroke="#70d6b3" marker-start="url(#arr)" marker-end="url(#arr)"/><text x="${(x0+xE)/2}" y="224" text-anchor="middle" fill="#70d6b3" font-size="13">Toplam uzunluk: ${fmt(convert(nose+body))} ${unitLabel()}</text>
- <text x="${xN+bodyPx/2}" y="${base+5}" text-anchor="middle" fill="#e8eef8" font-size="12">Gövde</text><text x="${x0+nosePx/2}" y="${base+4}" text-anchor="middle" fill="#092016" font-size="11">Burun</text>
- <text x="18" y="22" fill="#9fb0c8" font-size="12">Şematik, ölçek sınırlı</text>`;
+ <line x1="${x0}" y1="205" x2="${xE}" y2="205" stroke="#70d6b3" marker-start="url(#arr)" marker-end="url(#arr)"/><text x="${(x0+xE)/2}" y="224" text-anchor="middle" fill="#70d6b3" font-size="13">${t('d_total')}: ${fmt(convert(nose+body))} ${unitLabel()}</text>
+ <text x="${xN+bodyPx/2}" y="${base+5}" text-anchor="middle" fill="#e8eef8" font-size="12">${t('d_body')}</text><text x="${x0+nosePx/2}" y="${base+4}" text-anchor="middle" fill="#092016" font-size="11">${t('d_nose')}</text>
+ <text x="18" y="22" fill="#9fb0c8" font-size="12">${t('d_note')}</text>`;
 }
 ids.forEach(id=>$(id).addEventListener('input',calculate));
 $('reset').addEventListener('click',()=>{const defaults={diam:50,bodyRatio:10,noseRatio:3,rootRatio:2,spanRatio:1,tipRatio:.5,sweepRatio:.5,finCount:3,unit:'mm'};for(const [k,v] of Object.entries(defaults))$(k).value=v;calculate()});
 $('print').addEventListener('click',()=>window.print());
-calculate();
+$('lang-en').addEventListener('click',()=>setLang('en'));
+$('lang-tr').addEventListener('click',()=>setLang('tr'));
+applyLang();
 </script>
 </body>
 </html>
