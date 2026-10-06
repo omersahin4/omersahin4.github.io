@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roket Ölçüleri Hesaplayıcı</title>
+    
+    <!-- Google Fonts: Inter & JetBrains Mono for a technical, minimal look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@100;300;400&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#050505',
+                        surface: '#0d0d0d',
+                        border: '#1f1f1f',
+                        borderhover: '#3a3a3a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #ededed;
+            /* iPhone Safari bar sorunu için dynamic viewport height kullanıyoruz */
+            min-height: 100dvh; 
+        }
+    </style>
+</head>
+
+<!-- min-h-[100dvh] ve py-16 (padding) sayesinde mobilde aşağı kaydırma sorunu çözüldü -->
+<body class="flex flex-col items-center justify-center w-full px-6 py-16 sm:py-20 antialiased selection:bg-gray-800 selection:text-white">
+
+    <main class="w-full max-w-4xl mx-auto flex flex-col items-center justify-center my-auto">
+        
+        <!-- Header Section -->
+        <header class="text-center w-full mb-16 md:mb-24">
+            <h1 class="text-3xl md:text-5xl font-light tracking-wide text-white mb-6">
+                Roket Ölçüleri Hesaplayıcı
+            </h1>
+            <!-- Minimalistic separator line -->
+            <div class="h-[1px] w-12 bg-gray-700 mx-auto mb-8"></div>
+            <p class="text-xs md:text-sm text-gray-500 font-mono tracking-widest uppercase">
+                Bir versiyon seçiniz
+            </p>
+        </header>
+
+        <!-- Buttons Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 w-full max-w-3xl pb-10">
+            
+            <!-- Versiyon 1 (Gemini) -->
+            <a href="gemini.html" class="group flex flex-col items-center justify-center p-10 md:p-12 bg-surface border border-border rounded-lg hover:border-borderhover hover:bg-[#111] transition-all duration-300">
+                <span class="text-lg md:text-xl font-light text-gray-300 group-hover:text-white transition-colors duration-300">Versiyon 1</span>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-600 font-mono mt-4 transition-opacity duration-300">v1.0.0</span>
+            </a>
+
+            <!-- Versiyon 2 (Claude) -->
+            <a href="claude.html" class="group flex flex-col items-center justify-center p-10 md:p-12 bg-surface border border-border rounded-lg hover:border-borderhover hover:bg-[#111] transition-all duration-300">
+                <span class="text-lg md:text-xl font-light text-gray-300 group-hover:text-white transition-colors duration-300">Versiyon 2</span>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-600 font-mono mt-4 transition-opacity duration-300">v2.0.0</span>
+            </a>
+
+            <!-- Versiyon 3 (ChatGPT) -->
+            <a href="chatgpt.html" class="group flex flex-col items-center justify-center p-10 md:p-12 bg-surface border border-border rounded-lg hover:border-borderhover hover:bg-[#111] transition-all duration-300">
+                <span class="text-lg md:text-xl font-light text-gray-300 group-hover:text-white transition-colors duration-300">Versiyon 3</span>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-600 font-mono mt-4 transition-opacity duration-300">v3.0.0</span>
+            </a>
+
+        </div>
+    </main>
+
+    <!-- Very subtle footer -->
+    <footer class="mt-auto pt-10 text-center">
+        <p class="text-[10px] text-gray-700 font-mono tracking-wider">SYSTEM.INIT() // ROCKET_DESIGN_TOOLS</p>
+    </footer>
+
+</body>
+</html>

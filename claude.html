@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model Roket Hesaplayıcı</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5f1;--card:#fff;--tx:#1c1c1a;--mut:#6b6a64;--ac:#d9480f;--bd:#e2e0d8;--ok:#2b8a3e;--bad:#c92a2a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--card:#212120;--tx:#ecebe6;--mut:#9a988f;--ac:#ff8c5a;--bd:#34332f;--ok:#69db7c;--bad:#ff8787}}
+:root[data-theme="dark"]{--bg:#161615;--card:#212120;--tx:#ecebe6;--mut:#9a988f;--ac:#ff8c5a;--bd:#34332f;--ok:#69db7c;--bad:#ff8787}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 2px}h2{font-size:15px;margin:0 0 10px;color:var(--ac);text-transform:uppercase;letter-spacing:.04em}
+p.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut)}
+input,select{width:100%;padding:8px;margin-top:2px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.big input{font-size:22px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+td{padding:6px 4px;border-bottom:1px solid var(--bd)}td:last-child{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+td small{color:var(--mut);font-weight:400}
+.svgw{overflow-x:auto}svg{width:100%;height:auto;min-width:420px}
+.stab{font-size:18px;font-weight:700}
+button{padding:8px 14px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit;cursor:pointer}
+@media print{button,.noprint{display:none}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<main>
+<h1>🚀 Model Roket Hesaplayıcı</h1>
+<p class="sub">Gövde çapını gir, tüm ölçüler otomatik çıksın. Çarpanları istediğin gibi değiştirebilirsin.</p>
+
+<div class="card big"><label>Gövde dış çapı d (mm)<input id="d" type="number" value="25" min="5" step="0.5"></label></div>
+
+<div class="card"><h2>Ayarlar</h2><div class="grid">
+<label>Toplam boy (× d)<input id="Lm" type="number" value="15" step="0.5"></label>
+<label>Nose boyu (× d)<input id="Nm" type="number" value="4" step="0.5"></label>
+<label>Nose tipi<select id="nt"><option value="ogive">Tanjant ogive</option><option value="cone">Konik</option><option value="ellipse">Elips</option><option value="parab">Parabolik (K=0.5)</option><option value="haack">Von Kármán</option></select></label>
+<label>Fin sayısı N<select id="N"><option>3</option><option selected>4</option></select></label>
+<label>Kök kord Cr (× d)<input id="Crm" type="number" value="1.5" step="0.1"></label>
+<label>Açıklık s (× d)<input id="sm" type="number" value="1.2" step="0.1"></label>
+<label>Taper Ct/Cr<input id="tp" type="number" value="0.45" step="0.05"></label>
+<label>Fin kalınlığı (mm)<input id="ft" type="number" value="2" step="0.5"></label>
+</div></div>
+
+<div class="card svgw"><h2>Yan görünüş</h2><svg id="sv" viewBox="0 0 700 200"></svg></div>
+
+<div class="grid" style="align-items:start">
+<div class="card"><h2>Gövde ve nose</h2><table id="t1"></table></div>
+<div class="card"><h2>Fin</h2><table id="t2"></table></div>
+</div>
+
+<div class="card"><h2>Kararlılık (Barrowman)</h2>
+<table id="t3"></table>
+<div class="grid" style="margin-top:10px">
+<label>CG (nose ucundan, mm)<input id="cg" type="number" placeholder="ip ile dengele, gir"></label>
+</div>
+<div id="stab" class="stab" style="margin-top:10px"></div></div>
+
+<div class="card"><h2>Paraşüt ve itki</h2>
+<div class="grid">
+<label>Uçuşa hazır kütle (g)<input id="m" type="number" value="60"></label>
+<label>İniş hızı (m/s)<input id="v" type="number" value="5" step="0.5"></label>
+<label>Cd (yarım küre)<input id="cd" type="number" value="0.75" step="0.05"></label>
+</div><table id="t4"></table></div>
+
+<button onclick="window.print()">🖨 Yazdır / Kağıda al</button>
+</main>
+<script>
+const $=id=>document.getElementById(id), f=(x,n=1)=>isFinite(x)&&x!==''?(+x).toFixed(n):'–';
+const row=(a,b,h)=>`<tr><td>${a}${h?` <small>${h}</small>`:''}</td><td>${b}</td></tr>`;
+function prof(type,R,Ln,t){ // t: uçtan mesafe
+  const u=t/Ln;
+  switch(type){
+    case 'cone':return R*u;
+    case 'ellipse':return R*Math.sqrt(Math.max(0,1-(1-u)**2));
+    case 'parab':return R*(2*u-0.5*u*u)/1.5;
+    case 'haack':{const th=Math.acos(1-2*u);return R/Math.sqrt(Math.PI)*Math.sqrt(Math.max(0,th-Math.sin(2*th)/2));}
+    default:{const p=(R*R+Ln*Ln)/(2*R);return Math.sqrt(Math.max(0,p*p-(Ln-t)**2))+R-p;}
+  }
+}
+const XnF={ogive:.466,cone:.666,ellipse:.333,parab:.5,haack:.437};
+function calc(){
+  const d=+$('d').value,R=d/2,L=+$('Lm').value*d,Ln=+$('Nm').value*d,type=$('nt').value;
+  const N=+$('N').value,Cr=+$('Crm').value*d,s=+$('sm').value*d,Ct=Cr*+$('tp').value,Xr=Cr-Ct;
+  const tube=L-Ln,Xb=L-Cr;
+  $('t1').innerHTML=row('Toplam boy L',f(L)+' mm','15d')+row('Gövde tüpü boyu',f(tube)+' mm')+row('Nose boyu Ln',f(Ln)+' mm')
+   +row('Shoulder',f(d)+' mm','≥ 1d')+row('Shock cord',f(3*L/10)+' cm','3 × boy')+row('İç çap (yaklaşık)',f(d-1.2)+' mm','duvar ~0.6');
+  const A=(Cr+Ct)/2*s;
+  $('t2').innerHTML=row('Kök kord Cr',f(Cr)+' mm')+row('Uç kord Ct',f(Ct)+' mm')+row('Açıklık s',f(s)+' mm')
+   +row('Sweep Xr',f(Xr)+' mm','Cr − Ct')+row('Alan (tek fin)',f(A/100,2)+' cm²')+row('Kalınlık',f($('ft').value)+' mm')+row('Fin tab',f(4)+' mm','3–5');
+  // Barrowman
+  const Xn=XnF[type]*Ln,Lf=Math.hypot(s,Xr+(Ct-Cr)/2);
+  const CNf=(1+R/(s+R))*(4*N*(s/d)**2)/(1+Math.sqrt(1+(2*Lf/(Cr+Ct))**2));
+  const Xf=Xb+Xr*(Cr+2*Ct)/(3*(Cr+Ct))+(Cr+Ct-Cr*Ct/(Cr+Ct))/6;
+  const CP=(2*Xn+CNf*Xf)/(2+CNf);
+  $('t3').innerHTML=row('Nose CP (Xn)',f(Xn)+' mm')+row('CNf (fin)',f(CNf,2))+row('Fin CP (Xf)',f(Xf)+' mm')
+   +row('<b>Toplam CP</b>',f(CP)+' mm','nose ucundan')+row('Hedef CG aralığı',f(CP-2*d)+' – '+f(CP-d)+' mm','1–2 kaliber');
+  const cg=parseFloat($('cg').value),st=$('stab');
+  if(isFinite(cg)){const m=(CP-cg)/d;
+    st.textContent='Kararlılık: '+f(m,2)+' kaliber — '+(m<1?'Yetersiz: fin büyüt / nose’a ağırlık ekle':m>3?'Aşırı kararlı (weathercocking)':m<=2?'İyi ✔':'Kabul edilebilir');
+    st.style.color=m<1?'var(--bad)':'var(--ok)';
+  }else{st.textContent='CG gir → kararlılık hesaplansın';st.style.color='var(--mut)';}
+  // paraşüt
+  const m=$('m').value/1000,v=+$('v').value,cd=+$('cd').value;
+  const D=Math.sqrt(8*m*9.81/(Math.PI*1.225*cd*v*v))*1000;
+  $('t4').innerHTML=row('Paraşüt çapı',f(D/10)+' cm','D=√(8mg/πρCdv²)')+row('Gereken itki (T/W=5)',f(5*m*9.81,1)+' N')+row('Min. rampa hızı','15 m/s');
+  draw(d,R,L,Ln,type,N,Cr,Ct,s,Xr,Xb);
+}
+function draw(d,R,L,Ln,type,N,Cr,Ct,s,Xr,Xb){
+  const m=L*0.05,fs=L/38,H=R+s;
+  $('sv').setAttribute('viewBox',`${-m} ${-H-m} ${L+2*m} ${2*H+2*m+fs*2.5}`);
+  const c='stroke="currentColor" fill="none" stroke-width="1.5" vector-effect="non-scaling-stroke"';
+  const top=[],bot=[];
+  for(let i=0;i<=40;i++){const t=Ln*i/40,y=prof(type,R,Ln,t);top.push(t+','+(-y));bot.push(t+','+y);}
+  let h=`<polygon points="${top.join(' ')} ${bot.reverse().join(' ')}" ${c}/>`;
+  h+=`<rect x="${Ln}" y="${-R}" width="${L-Ln}" height="${2*R}" ${c}/>`;
+  const fin=g=>`<polygon points="${Xb},${g*R} ${Xb+Xr},${g*H} ${L},${g*H} ${L},${g*R}" fill="var(--ac)" fill-opacity=".25" stroke="var(--ac)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+  h+=fin(1)+fin(-1);
+  const ty=H+m+fs;
+  h+=`<text x="${Ln/2}" y="${ty}" font-size="${fs}" fill="currentColor" text-anchor="middle">Nose ${f(Ln,0)} mm</text><text x="${L}" y="${ty}" font-size="${fs}" fill="currentColor" text-anchor="end">L = ${f(L,0)} mm</text>`;
+  $('sv').innerHTML=h;
+}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>

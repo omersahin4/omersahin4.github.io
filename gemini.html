@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Roket Tasarım Hesaplayıcı</title>
+    
+    <!-- Google Fonts: Space Grotesk for a modern, aerospace vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        space: {
+                            900: '#0b0f19',
+                            800: '#111827',
+                            700: '#1f2937',
+                        },
+                        neon: {
+                            blue: '#00f0ff',
+                            purple: '#8a2be2'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Styles for glowing effects and animations */
+        body {
+            background-color: #0b0f19;
+            background-image: radial-gradient(circle at 50% 0%, #1f2937 0%, transparent 75%);
+            color: #e5e7eb;
+        }
+        
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+
+        .range-bar-container {
+            position: relative;
+            height: 12px;
+            background: #374151;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .range-bar-fill {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #8a2be2, #00f0ff);
+            border-radius: 9999px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+        }
+
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center antialiased">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10 mt-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full glass-panel mb-4 text-neon-blue">
+                <i class="fa-solid fa-rocket text-2xl"></i>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-2 tracking-tight">Roket<span class="text-neon-blue glow-text">Tasarım</span></h1>
+            <p class="text-gray-400 max-w-xl mx-auto">İdeal model roket parçası ölçülerinizi hesaplamak için gövde çapını girin. Optimum aerodinamik ve stabilite oranları otomatik olarak hesaplanacaktır.</p>
+        </header>
+
+        <!-- Input Section -->
+        <div class="glass-panel rounded-2xl p-6 md:p-8 mb-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon-purple to-neon-blue"></div>
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1 text-center md:text-left">
+                    <label for="diameterInput" class="block text-lg font-semibold text-gray-300 mb-2">
+                        <i class="fa-solid fa-arrows-left-right text-neon-blue mr-2"></i>Gövde Dış Çapı (d)
+                    </label>
+                    <p class="text-sm text-gray-500">Tüm referans ölçüler bu çapa göre oranlanır.</p>
+                </div>
+                
+                <div class="relative w-full md:w-64">
+                    <input type="number" id="diameterInput" value="26" min="1" step="0.1"
+                        class="w-full bg-space-900 border-2 border-gray-700 text-white text-3xl font-bold rounded-xl py-3 pl-4 pr-16 focus:outline-none focus:border-neon-blue focus:ring-1 focus:ring-neon-blue transition-all shadow-inner text-center md:text-left">
+                    <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold text-lg">mm</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="space-y-4" id="resultsContainer">
+            <!-- Items will be injected here by JavaScript -->
+        </div>
+        
+        <!-- Footer info -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p><i class="fa-solid fa-circle-info mr-1"></i> Formüller standart stabilite ve performans kurallarına dayanmaktadır.</p>
+        </div>
+    </div>
+
+    <script>
+        // Data structure containing the formulas and UI details for each component
+        const components = [
+            { id: "nosecone", name: "Burun Konisi Uzunluğu", minF: 2, maxF: 5, icon: "fa-caret-up", desc: "Aerodinamik sürtünmeyi minimize eder." },
+            { id: "bodytube", name: "Gövde Borusu Uzunluğu", minF: 10, maxF: 20, icon: "fa-ruler-vertical", desc: "Denge ve ağırlık oranını belirler." },
+            { id: "finroot", name: "Kanatçık Kökü (Root)", minF: 1.5, maxF: 2, icon: "fa-grip-lines", desc: "Gövdeye yapışan taban uzunluğu." },
+            { id: "finspan", name: "Kanatçık Genişliği (Span)", minF: 1.5, maxF: 2, icon: "fa-arrows-alt-h", desc: "Gövdeden dışa doğru genişlik." },
+            { id: "fintip", name: "Kanatçık Ucu (Tip)", minF: 0.5, maxF: 0.75, icon: "fa-compress-alt", desc: "Kanatçığın en dış uç uzunluğu." },
+            { id: "staticmargin", name: "Statik Marj (CG-CP)", minF: 1, maxF: 2, icon: "fa-balance-scale", desc: "Roketin havada takla atmaması için kritik mesafe." }
+        ];
+
+        const resultsContainer = document.getElementById('resultsContainer');
+        const diameterInput = document.getElementById('diameterInput');
+
+        // Function to create the HTML structure for each component row
+        function initializeUI() {
+            resultsContainer.innerHTML = ''; // Clear container
+            
+            components.forEach((comp, index) => {
+                // Determine a max scale for the visual bar (20% larger than the max formula)
+                const scaleMax = comp.maxF * 1.2; 
+                // Calculate percentages for the CSS bar positioning
+                const leftPercent = (comp.minF / scaleMax) * 100;
+                const widthPercent = ((comp.maxF - comp.minF) / scaleMax) * 100;
+
+                const cardHTML = `
+                    <div class="glass-panel rounded-xl p-5 hover:bg-space-800 transition-colors duration-300 border border-transparent hover:border-gray-700">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                            
+                            <div class="flex items-center mb-3 md:mb-0">
+                                <div class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-neon-blue mr-4 shadow-lg border border-gray-700">
+                                    <i class="fa-solid ${comp.icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-200">${comp.name}</h3>
+                                    <p class="text-xs text-gray-500">${comp.desc}</p>
+                                </div>
+                            </div>
+
+                            <div class="text-right flex-shrink-0">
+                                <div class="text-2xl font-bold text-white tracking-wider" id="val-${comp.id}">
+                                    -- <span class="text-sm font-normal text-gray-400">mm</span>
+                                </div>
+                                <div class="text-xs text-neon-blue font-semibold tracking-wide">
+                                    Formül: ${comp.minF}d - ${comp.maxF}d
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visual Range Bar -->
+                        <div class="relative pt-2">
+                            <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                                <span>0</span>
+                                <span>İdeal Aralık</span>
+                                <span>Maks</span>
+                            </div>
+                            <div class="range-bar-container">
+                                <!-- The visible range part -->
+                                <div class="range-bar-fill opacity-80 hover:opacity-100" 
+                                     style="left: ${leftPercent}%; width: ${widthPercent}%;">
+                                </div>
+                            </div>
+                            <!-- Dynamic value markers (Min / Max) -->
+                            <div class="absolute w-full h-full top-0 left-0 pointer-events-none mt-[26px]">
+                                <div class="absolute text-[11px] text-white font-medium transform -translate-x-1/2" 
+                                     style="left: ${leftPercent}%;" id="min-lbl-${comp.id}"></div>
+                                <div class="absolute text-[11px] text-white font-medium transform -translate-x-1/2" 
+                                     style="left: ${(comp.maxF / scaleMax) * 100}%;" id="max-lbl-${comp.id}"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                resultsContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        // Function to calculate and update values based on input
+        function calculate() {
+            let d = parseFloat(diameterInput.value);
+            
+            // Validation
+            if (isNaN(d) || d <= 0) {
+                d = 0;
+            }
+
+            components.forEach(comp => {
+                const valElement = document.getElementById(`val-${comp.id}`);
+                const minLblElement = document.getElementById(`min-lbl-${comp.id}`);
+                const maxLblElement = document.getElementById(`max-lbl-${comp.id}`);
+
+                if (d === 0) {
+                    valElement.innerHTML = `-- <span class="text-sm font-normal text-gray-400">mm</span>`;
+                    minLblElement.innerText = '';
+                    maxLblElement.innerText = '';
+                    return;
+                }
+
+                // Calculate minimum and maximum values
+                const minVal = (d * comp.minF).toFixed(1);
+                const maxVal = (d * comp.maxF).toFixed(1);
+
+                // Update text displays
+                valElement.innerHTML = `${minVal} - ${maxVal} <span class="text-sm font-normal text-gray-400">mm</span>`;
+                minLblElement.innerText = minVal;
+                maxLblElement.innerText = maxVal;
+            });
+        }
+
+        // Initialize UI and attach event listeners on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeUI();
+            calculate(); // Run initial calculation with default value
+
+            // Listen for user input events
+            diameterInput.addEventListener('input', calculate);
+        });
+
+    </script>
+</body>
+</html>
